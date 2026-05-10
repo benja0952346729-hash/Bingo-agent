@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Withdraw Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0a0a0f;
+    --paper: #f5f0e8;
+    --gold: #d4a853;
+    --gold-dark: #a07830;
+    --red: #c0392b;
+    --green: #1a7a4a;
+    --muted: #8a8070;
+    --border: #d0c8b8;
+    --surface: #ede8dc;
+    --accent: #2c1810;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Syne', sans-serif;
+    background: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(212,168,83,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(212,168,83,0.04) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  header {
+    width: 100%;
+    max-width: 700px;
+    padding: 40px 20px 0;
+    position: relative;
+    z-index: 1;
+  }
+
+  .header-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 4px;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .header-tag::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--gold), transparent);
+  }
+
+  h1 {
+    font-size: clamp(2.2rem, 7vw, 3.5rem);
+    font-weight: 900;
+    color: var(--paper);
+    letter-spacing: -1px;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  h1 span { color: var(--gold); }
+
+  .header-sub {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 1px;
+    margin-bottom: 28px;
+  }
+
+  .stat-pill {
+    background: rgba(212,168,83,0.08);
+    border: 1px solid rgba(212,168,83,0.2);
+    border-radius: 100px;
+    padding: 8px 18px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--paper);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .stat-pill .val { color: var(--gold); font-weight: 700; }
+
+  .live-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(26,122,74,0.15);
+    border: 1px solid rgba(26,122,74,0.4);
+    border-radius: 100px;
+    padding: 6px 14px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: #4ade80;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .live-dot {
+    width: 6px; height: 6px;
+    background: #4ade80;
+    border-radius: 50%;
+    animation: pulse 1.4s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+
+  .main {
+    width: 100%;
+    max-width: 700px;
+    padding: 0 20px 60px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .section-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 4px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-label::before {
+    content: '';
+    width: 20px;
+    height: 1px;
+    background: var(--muted);
+  }
+
+  .wd-card {
+    background: #12121a;
+    border: 1px solid #1e1e2e;
+    border-radius: 16px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.15s;
+    animation: slideUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+  .wd-card:hover { border-color: rgba(212,168,83,0.25); transform: translateY(-1px); }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .wd-body {
+    padding: 18px 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .wd-avatar {
+    width: 52px; height: 52px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #1e1e2e, #0a0a14);
+    border: 1px solid #2a2a3e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .wd-avatar::after {
+    content: '';
+    position: absolute; inset: -1px;
+    border-radius: 13px;
+    background: linear-gradient(135deg, rgba(212,168,83,0.3), transparent);
+    pointer-events: none;
+  }
+
+  .wd-info { flex: 1; min-width: 140px; }
+  .wd-name { font-size: 1rem; font-weight: 800; color: var(--paper); letter-spacing: -0.3px; margin-bottom: 3px; }
+  .wd-uid { font-family: 'Space Mono', monospace; font-size: 0.7rem; color: var(--muted); margin-bottom: 8px; }
+  .wd-meta { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  .meta-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: #1a1a28; border: 1px solid #2a2a40;
+    border-radius: 8px; padding: 4px 10px;
+    font-family: 'Space Mono', monospace; font-size: 0.68rem; color: #8a90b0;
+  }
+  .meta-chip.method { border-color: rgba(212,168,83,0.25); color: var(--gold); background: rgba(212,168,83,0.06); }
+  .meta-chip.account { border-color: rgba(99,179,237,0.2); color: #90cdf4; background: rgba(99,179,237,0.05); letter-spacing: 1px; }
+
+  .wd-right { text-align: right; flex-shrink: 0; }
+  .wd-amount { font-family: 'Space Mono', monospace; font-size: 1.6rem; font-weight: 700; color: var(--gold); line-height: 1; letter-spacing: -1px; }
+  .wd-amount-label { font-size: 0.65rem; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+  .wd-time { font-family: 'Space Mono', monospace; font-size: 0.62rem; color: #4a4a5a; margin-top: 6px; }
+
+  .wd-actions { border-top: 1px solid #1a1a28; }
+
+  .btn-accept {
+    width: 100%; padding: 16px; border: none;
+    background: rgba(212,168,83,0.1); color: var(--gold);
+    font-family: 'Syne', sans-serif; font-weight: 800;
+    font-size: 1rem; letter-spacing: 4px; cursor: pointer;
+    transition: background 0.15s;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+  }
+  .btn-accept:hover { background: rgba(212,168,83,0.22); }
+  .btn-accept:active { transform: scale(0.99); }
+
+  .timer-wrap {
+    padding: 12px 18px 10px;
+    display: flex; align-items: center; gap: 14px;
+    border-bottom: 1px solid #1a1a28;
+  }
+  .timer-circle { position: relative; width: 54px; height: 54px; flex-shrink: 0; }
+  .timer-circle svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+  .timer-circle .track { fill: none; stroke: #1e1e2e; stroke-width: 3; }
+  .timer-circle .progress {
+    fill: none; stroke: var(--gold); stroke-width: 3; stroke-linecap: round;
+    stroke-dasharray: 138.2; stroke-dashoffset: 0;
+    transition: stroke-dashoffset 1s linear, stroke 0.5s;
+  }
+  .timer-num {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Space Mono', monospace; font-weight: 700; font-size: 0.78rem; color: var(--gold);
+  }
+  .timer-info { flex: 1; }
+  .timer-label { font-family: 'Space Mono', monospace; font-size: 0.6rem; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 3px; }
+  .timer-status { font-size: 0.82rem; font-weight: 700; color: var(--paper); }
+
+  .pr-row { display: flex; }
+  .btn-paid {
+  flex: 1; padding: 15px; border: none;
+  background: rgba(26,122,74,0.12); color: #4ade80;
+  font-family: 'Syne', sans-serif; font-weight: 800;
+  font-size: 0.9rem; letter-spacing: 2px; cursor: pointer;
+  transition: background 0.15s; border-right: 1px solid #1a1a28;
+  display: flex; align-items: center; justify-content: center;
+  min-height: 52px; border-radius: 0;
+  box-shadow: inset 0 0 0 1px rgba(74,222,128,0.15);
+}
+.btn-paid:hover { background: rgba(26,122,74,0.25); }
+  .btn-paid div, label .btn-paid {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+}
+
+label {
+  display: flex;
+  align-items: stretch;
+}
+  .btn-paid:hover { background: rgba(26,122,74,0.25); }
+  .btn-reject {
+  flex: 1; padding: 15px; border: none;
+  background: rgba(192,57,43,0.08); color: #f87171;
+  font-family: 'Syne', sans-serif; font-weight: 800;
+  font-size: 0.9rem; letter-spacing: 2px; cursor: pointer;
+  transition: background 0.15s;
+  display: flex; align-items: center; justify-content: center;
+  min-height: 52px; border-radius: 0;
+  box-shadow: inset 0 0 0 1px rgba(248,113,113,0.15);
+}
+  .btn-reject:hover { background: rgba(192,57,43,0.22); }
+  .btn-paid:active, .btn-reject:active { transform: scale(0.99); }
+
+  .locked-bar {
+    padding: 13px 18px;
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(0,0,0,0.25);
+  }
+  .locked-text { font-family: 'Space Mono', monospace; font-size: 0.68rem; color: #3a3a50; letter-spacing: 1px; flex: 1; }
+  .locked-countdown { font-family: 'Space Mono', monospace; font-size: 0.7rem; color: #4a4a5a; }
+
+  .wd-card.accepted-by-me { border-color: rgba(212,168,83,0.4); box-shadow: 0 0 28px rgba(212,168,83,0.07); }
+
+  .agent-bar {
+    display: flex; align-items: center; gap: 10px;
+    flex-wrap: wrap; margin-bottom: 24px;
+  }
+  .agent-pill {
+    background: rgba(212,168,83,0.08);
+    border: 1px solid rgba(212,168,83,0.25);
+    border-radius: 100px; padding: 7px 16px;
+    font-family: 'Space Mono', monospace; font-size: 0.72rem; color: var(--gold);
+  }
+
+  .wd-card.processing { opacity: 0.45; pointer-events: none; }
+
+  .empty-state {
+    text-align: center; padding: 60px 20px;
+    border: 1px dashed #1e1e2e; border-radius: 16px;
+    background: rgba(255,255,255,0.01);
+  }
+  .empty-icon { font-size: 3rem; margin-bottom: 12px; }
+  .empty-title { font-size: 1.1rem; font-weight: 700; color: #2a2a40; margin-bottom: 6px; }
+  .empty-sub { font-family: 'Space Mono', monospace; font-size: 0.7rem; color: #2a2a40; letter-spacing: 1px; }
+
+  .loading-state {
+    display: flex; align-items: center; justify-content: center;
+    gap: 10px; padding: 40px;
+    font-family: 'Space Mono', monospace; font-size: 0.75rem; color: var(--muted); letter-spacing: 2px;
+  }
+  .spinner {
+    width: 18px; height: 18px;
+    border: 2px solid rgba(212,168,83,0.2);
+    border-top-color: var(--gold); border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  #toast {
+    position: fixed; bottom: 30px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #12121a; border: 1px solid rgba(212,168,83,0.3);
+    border-radius: 12px; padding: 14px 24px;
+    font-family: 'Space Mono', monospace; font-size: 0.78rem;
+    color: var(--paper); letter-spacing: 1px;
+    opacity: 0; transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    z-index: 999; white-space: nowrap;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  #toast.success { border-color: rgba(74,222,128,0.4); color: #4ade80; }
+  #toast.error { border-color: rgba(248,113,113,0.4); color: #f87171; }
+  #toast.info { border-color: rgba(212,168,83,0.5); color: var(--gold); }
+
+  .hist-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px;
+    background: #0e0e18; border: 1px solid #1a1a28;
+    border-radius: 10px; margin-bottom: 8px;
+    font-family: 'Space Mono', monospace; font-size: 0.72rem;
+    gap: 12px; flex-wrap: wrap;
+  }
+  .hist-name { color: var(--paper); font-weight: 700; }
+  .hist-amount { color: var(--gold); }
+  .hist-status-approved { color: #4ade80; letter-spacing: 1px; }
+  .hist-status-rejected { color: #f87171; letter-spacing: 1px; }
+  .hist-time { color: #3a3a50; }
+
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(212,168,83,0.15), transparent);
+    margin: 28px 0;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  @media(max-width:500px){ .stats-grid { grid-template-columns: 1fr 1fr; } }
+
+  .stats-card {
+    background: #12121a;
+    border: 1px solid #1e1e2e;
+    border-radius: 14px;
+    padding: 16px 18px;
+  }
+  .stats-card-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.58rem; letter-spacing: 3px;
+    color: var(--muted); text-transform: uppercase; margin-bottom: 8px;
+  }
+  .stats-card-val {
+    font-family: 'Space Mono', monospace;
+    font-size: 1.25rem; font-weight: 700; color: var(--gold); letter-spacing: -0.5px;
+  }
+  .stats-card-sub {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem; color: var(--muted); margin-top: 3px;
+  }
+
+  .day-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+  .day-bar-label { font-family: 'Space Mono', monospace; font-size: 0.62rem; color: var(--muted); width: 68px; flex-shrink: 0; }
+  .day-bar-track { flex: 1; background: #1a1a28; border-radius: 6px; height: 20px; overflow: hidden; }
+  .day-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold), var(--gold-dark));
+    border-radius: 6px;
+    transition: width 0.7s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .day-bar-val { font-family: 'Space Mono', monospace; font-size: 0.65rem; color: var(--gold); width: 95px; text-align: right; flex-shrink: 0; }
+  .day-bar-cnt { font-size: 0.58rem; color: var(--muted); }
+
+  /* ── LOGIN ── */
+  #loginScreen {
+    position: fixed; inset: 0; z-index: 9999;
+    background: var(--ink);
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+    overflow-y: auto;
+  }
+  #loginScreen::before {
+    content: ''; position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(212,168,83,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(212,168,83,0.04) 1px, transparent 1px);
+    background-size: 48px 48px; pointer-events: none;
+  }
+  .login-box {
+    position: relative; z-index: 1;
+    width: 100%; max-width: 380px;
+    background: #12121a; border: 1px solid rgba(212,168,83,0.3);
+    border-radius: 20px; padding: 32px 28px; text-align: center;
+    box-shadow: 0 0 80px rgba(212,168,83,0.08);
+    animation: slideUp 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    margin: auto;
+  }
+  .login-icon { font-size: 2.4rem; margin-bottom: 10px; }
+  .login-title { font-family: 'Syne', sans-serif; font-size: 1.8rem; font-weight: 900; color: var(--paper); letter-spacing: -1px; margin-bottom: 2px; }
+  .login-title span { color: var(--gold); }
+  .login-sub { font-family: 'Space Mono', monospace; font-size: 0.65rem; color: var(--muted); letter-spacing: 3px; margin-bottom: 24px; }
+
+  /* ID Photo Upload */
+  .photo-upload-area {
+    border: 2px dashed rgba(212,168,83,0.3);
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 14px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .photo-upload-area:hover { border-color: var(--gold); background: rgba(212,168,83,0.04); }
+  .photo-upload-area input[type=file] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+  }
+  .photo-upload-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem; letter-spacing: 2px; color: var(--muted);
+    text-transform: uppercase; display: block; margin-bottom: 6px;
+  }
+  .photo-upload-icon { font-size: 2rem; margin-bottom: 4px; display: block; }
+  .photo-upload-hint { font-family: 'Space Mono', monospace; font-size: 0.6rem; color: #3a3a50; letter-spacing: 1px; }
+
+  #idPreview {
+    display: none;
+    width: 100%; max-height: 180px; object-fit: cover;
+    border-radius: 10px; margin-top: 10px;
+    border: 1px solid rgba(212,168,83,0.3);
+  }
+  .photo-check {
+    display: none;
+    align-items: center; justify-content: center; gap: 6px;
+    margin-top: 8px;
+    font-family: 'Space Mono', monospace; font-size: 0.65rem;
+    color: #4ade80; letter-spacing: 2px;
+  }
+
+  .login-field { margin-bottom: 12px; text-align: left; }
+  .login-label { font-family: 'Space Mono', monospace; font-size: 0.6rem; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; display: block; margin-bottom: 6px; }
+  .login-inp {
+    width: 100%; background: #0a0a14; border: 1px solid #2a2a3e;
+    color: var(--paper); padding: 12px 16px; border-radius: 10px;
+    font-family: 'Syne', sans-serif; font-size: 0.95rem; font-weight: 600;
+    outline: none; transition: border-color 0.2s;
+  }
+  .login-inp:focus { border-color: var(--gold); }
+  .login-inp.err { border-color: #f87171; animation: shake 0.3s; }
+  @keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-6px);} 75%{transform:translateX(6px);} }
+
+  .login-btn {
+    width: 100%; margin-top: 8px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+    color: #0a0a0f; border: none; border-radius: 12px; padding: 14px;
+    font-family: 'Syne', sans-serif; font-weight: 900; font-size: 1rem;
+    letter-spacing: 3px; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .login-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(212,168,83,0.3); }
+  .login-btn:active { transform: scale(0.98); }
+  .login-err { color: #f87171; font-family: 'Space Mono', monospace; font-size: 0.72rem; letter-spacing: 1px; min-height: 18px; margin-top: 10px; }
+
+  /* Change Password */
+  .change-pw-toggle {
+    margin-top: 14px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.62rem; color: var(--muted);
+    cursor: pointer; letter-spacing: 2px;
+    transition: color 0.2s;
+    display: inline-block;
+  }
+  .change-pw-toggle:hover { color: var(--gold); }
+
+  #changePwSection {
+    display: none;
+    margin-top: 16px;
+    border-top: 1px solid #1e1e2e;
+    padding-top: 16px;
+    text-align: left;
+  }
+  .change-pw-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem; letter-spacing: 3px;
+    color: var(--gold); text-transform: uppercase;
+    margin-bottom: 12px; text-align: center;
+  }
+  .change-pw-btn {
+    width: 100%; margin-top: 6px;
+    background: rgba(212,168,83,0.12);
+    color: var(--gold); border: 1px solid rgba(212,168,83,0.3);
+    border-radius: 10px; padding: 12px;
+    font-family: 'Syne', sans-serif; font-weight: 800;
+    font-size: 0.85rem; letter-spacing: 2px; cursor: pointer;
+    transition: background 0.15s;
+  }
+  .change-pw-btn:hover { background: rgba(212,168,83,0.22); }
+
+  .logout-btn {
+    background: transparent; border: 1px solid #2a2a3e;
+    color: var(--muted); border-radius: 8px; padding: 5px 12px;
+    font-family: 'Space Mono', monospace; font-size: 0.68rem;
+    cursor: pointer; transition: all 0.15s; letter-spacing: 1px;
+  }
+  .logout-btn:hover { border-color: #f87171; color: #f87171; }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #2a2a3e; border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════ LOGIN SCREEN ══════════════ -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-icon">🤖</div>
+    <div class="login-title">AGENT <span>LOGIN</span></div>
+    <div class="login-sub">// WITHDRAW PANEL</div>
+
+    <!-- NAME -->
+    <div class="login-field">
+      <label class="login-label">Agent Name</label>
+      <input class="login-inp" id="loginName" type="text" placeholder="ስምዎን ያስገቡ" autocomplete="off"
+        onkeydown="if(event.key==='Enter')document.getElementById('loginIdNumber').focus()">
+    </div>
+
+    <!-- ID NUMBER -->
+    <div class="login-field">
+      <label class="login-label">🪪 የግል ቁጥር (ID Number)</label>
+      <input class="login-inp" id="loginIdNumber" type="text" placeholder="መታወቂያ ቁጥር ያስገቡ" autocomplete="off"
+        onkeydown="if(event.key==='Enter')document.getElementById('loginPass').focus()">
+    </div>
+
+    <!-- PASSWORD -->
+    <div class="login-field">
+      <label class="login-label">Password</label>
+      <div style="position:relative;">
+        <input class="login-inp" id="loginPass" type="password" placeholder="••••••"
+          onkeydown="if(event.key==='Enter')doLogin()" style="padding-right:44px;">
+        <span onclick="togglePw('loginPass',this)"
+          style="position:absolute;right:14px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:1rem;color:var(--muted);">👁</span>
+      </div>
+    </div>
+
+    <button class="login-btn" onclick="doLogin()">⚡ LOGIN</button>
+    <div class="login-err" id="loginErr"></div>
+
+  </div>
+</div>
+
+<!-- ══════════════ MAIN HEADER ══════════════ -->
+<header>
+  <div class="header-tag">Bingo System · Agent Panel</div>
+  <h1>WITH<span>DRAW</span></h1>
+  <div class="header-sub">// AGENT REQUEST HANDLER</div>
+  <div class="agent-bar">
+    <div class="live-badge"><div class="live-dot"></div>LIVE</div>
+    <div class="agent-pill">🤖 Agent: <span id="agentIdDisplay">—</span></div>
+    <div class="stat-pill">Pending: <span class="val" id="pendingCount">—</span></div>
+    <div class="stat-pill">Total: <span class="val" id="pendingTotal">—</span></div>
+    <button class="logout-btn" onclick="doLogout()">↩ LOGOUT</button>
+  </div>
+</header>
+
+<div class="main">
+
+  <!-- PENDING -->
+  <div class="section-label">Pending Requests</div>
+  <div id="pendingList">
+    <div class="loading-state"><div class="spinner"></div>LOADING...</div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- STATS -->
+  <div class="section-label">📊 Statistics</div>
+  <div class="stats-grid">
+    <div class="stats-card">
+      <div class="stats-card-label">ዛሬ Paid</div>
+      <div class="stats-card-val" id="statTodayAmt">—</div>
+      <div class="stats-card-sub" id="statTodayCnt">— ጊዜ</div>
+    </div>
+    <div class="stats-card">
+      <div class="stats-card-label">7 ቀን Total</div>
+      <div class="stats-card-val" id="statWeekAmt">—</div>
+      <div class="stats-card-sub" id="statWeekCnt">— ጊዜ</div>
+    </div>
+    <div class="stats-card">
+      <div class="stats-card-label">7 ቀን Rejected</div>
+      <div class="stats-card-val" id="statRejAmt" style="color:#f87171;">—</div>
+      <div class="stats-card-sub" id="statRejCnt">— ጊዜ</div>
+    </div>
+  </div>
+
+  <!-- DAILY BREAKDOWN -->
+  <div class="section-label">📅 በቀን Breakdown</div>
+  <div id="dailyBreakdown" style="margin-bottom:24px;">
+    <div class="loading-state"><div class="spinner"></div>LOADING...</div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- APPROVED LIST -->
+  <div class="section-label">✅ Approved List (7 ቀን)</div>
+  <div id="approvedList">
+    <div class="loading-state"><div class="spinner"></div>LOADING...</div>
+
+  </div>
+
+<div id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, get, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const app = initializeApp({
+  apiKey: "AIzaSyCHXEQ8nx1SYeQm1eptTf2xU_WXKG4lowM",
+  databaseURL: "https://house-rent-app-3674a-default-rtdb.firebaseio.com/"
+});
+const db = getDatabase(app);
+
+const FALLBACK_PASSWORD = 'agent2025';
+let AGENT_PASSWORD = 'agent2025';
+
+// Firebase ላይ ያለውን password ጫን
+async function loadAgentPassword(){
+  const snap = await get(ref(db, 'settings/agent_password'));
+  if(snap.exists()) AGENT_PASSWORD = snap.val();
+}
+let AGENT_ID = '';
+
+// ── HELPERS ──
+function toast(msg, type='success'){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show ' + type;
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.className = '', 3200);
+}
+function fmtTime(str){
+  if(!str) return '—';
+  try {
+    return new Date(str).toLocaleString('am-ET', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+  } catch { return str; }
+}
+function fmtSecs(ms){
+  const s = Math.max(0, Math.floor(ms/1000));
+  return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+}
+
+// ── SHOW/HIDE PASSWORD ──
+window.togglePw = function(id, icon){
+  const inp = document.getElementById(id);
+  if(inp.type === 'password'){ inp.type = 'text'; icon.textContent = '🙈'; }
+  else { inp.type = 'password'; icon.textContent = '👁'; }
+};
+
+
+// ── LOGIN ──
+async function doLogin(){
+  const name   = document.getElementById('loginName').value.trim();
+  const idNum  = document.getElementById('loginIdNumber').value.trim();
+  const pass   = document.getElementById('loginPass').value;
+  const errEl  = document.getElementById('loginErr');
+
+  errEl.style.color = '#f87171';
+
+  if(!name){
+    document.getElementById('loginName').classList.add('err');
+    setTimeout(()=>document.getElementById('loginName').classList.remove('err'),700);
+    errEl.textContent = '❌ ስምዎን ያስገቡ!';
+    return;
+  }
+  if(!idNum){
+    document.getElementById('loginIdNumber').classList.add('err');
+    setTimeout(()=>document.getElementById('loginIdNumber').classList.remove('err'),700);
+    errEl.textContent = '❌ የግል ቁጥር ያስገቡ!';
+    return;
+  }
+  if(!pass){
+    document.getElementById('loginPass').classList.add('err');
+    setTimeout(()=>document.getElementById('loginPass').classList.remove('err'),700);
+    errEl.textContent = '❌ Password ያስገቡ!';
+    return;
+  }
+
+  const agentSnap = await get(ref(db, `agents/${name}`));
+  if(!agentSnap.exists()){
+    errEl.textContent = '❌ Agent አልተመዘገበም!';
+    return;
+  }
+
+  const agentData = agentSnap.val();
+
+  // ID Number ማመሳሰል
+  if(String(agentData.id_number) !== String(idNum)){
+    document.getElementById('loginIdNumber').classList.add('err');
+    setTimeout(()=>document.getElementById('loginIdNumber').classList.remove('err'),700);
+    document.getElementById('loginIdNumber').value = '';
+    errEl.textContent = '❌ የግል ቁጥር ትክክል አይደለም!';
+    return;
+  }
+
+  // Password — Firebase settings ላይ ያለው
+  if(pass !== AGENT_PASSWORD){
+    document.getElementById('loginPass').classList.add('err');
+    setTimeout(()=>document.getElementById('loginPass').classList.remove('err'),700);
+    document.getElementById('loginPass').value = '';
+    errEl.textContent = '❌ Password ትክክል አይደለም!';
+    return;
+  }
+
+  AGENT_ID = name;
+  localStorage.setItem('agentName', name);
+  localStorage.setItem('agentPass', AGENT_PASSWORD);
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('agentIdDisplay').textContent = AGENT_ID;
+  errEl.textContent = '';
+  toast(`👋 እንኳን ደህና መጡ, ${AGENT_ID}!`, 'info');
+renderHistory(withdrawData);
+renderStats(withdrawData);
+}
+
+window.doLogin = doLogin;
+
+// ── LOGOUT ──
+window.doLogout = function(){
+  localStorage.removeItem('agentName');
+  localStorage.removeItem('agentPass');
+  AGENT_ID = '';
+  document.getElementById('loginName').value = '';
+  document.getElementById('loginIdNumber').value = '';
+  document.getElementById('loginPass').value = '';
+  document.getElementById('loginErr').textContent = '';
+  document.getElementById('loginScreen').style.display = 'flex';
+};
+
+// ── AUTO LOGIN ──
+loadAgentPassword(); // Firebase ላይ ያለውን password ጫን
+
+// Password realtime update — admin ሲቀይር ወዲያው update ይሆናል
+onValue(ref(db, 'settings/agent_password'), (snap) => {
+  if(snap.exists()){
+    const newPass = snap.val();
+    // Admin password ቀይሮ ከሆነ — saved session ያጥፋ
+    const savedPass = localStorage.getItem('agentPass');
+    if(savedPass && savedPass !== newPass && AGENT_ID){
+      localStorage.removeItem('agentName');
+      localStorage.removeItem('agentPass');
+      AGENT_ID = '';
+      document.getElementById('agentIdDisplay').textContent = '—';
+      document.getElementById('loginName').value = '';
+      document.getElementById('loginIdNumber').value = '';
+      document.getElementById('loginPass').value = '';
+      document.getElementById('loginErr').textContent = '';
+      document.getElementById('loginScreen').style.display = 'flex';
+      toast('🔑 Admin Password ቀይሯል — እንደገና ይግቡ!', 'error');
+    }
+    AGENT_PASSWORD = newPass;
+    localStorage.setItem('agentPass', newPass);
+  }
+});
+
+const savedName = localStorage.getItem('agentName');
+if(savedName){
+  AGENT_ID = savedName;
+  document.getElementById('agentIdDisplay').textContent = AGENT_ID;
+  document.getElementById('loginScreen').style.display = 'none';
+} else {
+  setTimeout(()=>document.getElementById('loginPhoto').click && document.getElementById('loginName').focus(), 300);
+}
+
+// ══════════════════════════════════════════
+//  WITHDRAW LOGIC
+// ══════════════════════════════════════════
+let withdrawData = {};
+const LOCK_MS = 3 * 60 * 1000;
+const activeTimers = {};
+const lockedTimers = {};
+
+async function clearOldData(){
+  const snap = await get(ref(db, 'bot/withdrawals'));
+  const data = snap.val() || {};
+  const cutoff = Date.now() - (7 * 24 * 60 * 60 * 1000);
+  for(const [key, wd] of Object.entries(data)){
+    if((wd.status === 'approved' || wd.status === 'rejected') && wd.time){
+      if(new Date(wd.time).getTime() < cutoff)
+        await set(ref(db, `bot/withdrawals/${key}`), null);
+    }
+  }
+}
+clearOldData();
+
+window.acceptRequest = async (key) => {
+  const allSnap = await get(ref(db, `bot/withdrawals`));
+  const allData = allSnap.val() || {};
+  const myActive = Object.entries(allData).find(([k,v])=>
+    v.status === 'accepted' && v.acceptedBy === AGENT_ID && k !== key
+  );
+  if(myActive){ toast('⚠️ አሁን ያለህን Request አጠናቅ!', 'error'); return; }
+
+  const snap = await get(ref(db, `bot/withdrawals/${key}`));
+  const wd = snap.val();
+  if(!wd) return;
+
+  const now = Date.now();
+  if(wd.status === 'accepted' && wd.acceptedBy !== AGENT_ID){
+    const elapsed = now - (wd.acceptedAt || 0);
+    if(elapsed < LOCK_MS){ toast('⚠️ ሌላ Agent ወስዷል!', 'error'); return; }
+  }
+
+  await update(ref(db, `bot/withdrawals/${key}`), {
+    status: 'accepted', acceptedBy: AGENT_ID, acceptedAt: now
+  });
+  toast('✅ Request ተቀበልክ! 3 ደቂቃ አለህ.', 'info');
+};
+window.onPhotoSelected = async (key, input) => {
+  const file = input.files[0];
+  if(!file) return;
+
+  const btn = document.getElementById('paid-btn-'+key);
+  btn.textContent = '⏫ Uploading...';
+
+  try {
+    // Telegram ላይ upload
+    const snap = await get(ref(db, `bot/withdrawals/${key}`));
+    const wd = snap.val();
+    const uid = wd.user_id || '';
+
+    const BOT_TOKEN = '8710010099:AAFSR9XT0ox3F9ZYmlqx47expiyuBO4Pbzk'; // ←
+    const formData = new FormData();
+    formData.append('chat_id', uid);
+    formData.append('photo', file);
+    formData.append('caption', `✅ ${wd.amount} ብር በ ${wd.method} ተላከ!\n📋 Account: ${wd.account}`);
+
+    const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+      method: 'POST',
+      body: formData
+    });
+    const data = await res.json();
+
+    if(!data.ok) throw new Error('Telegram upload failed');
+
+btn.textContent = '⏳ Processing...';
+await markPaid(key);
+  } catch(e) {
+    btn.textContent = '❌ Error — ድጋሚ ሞክር';
+    console.error(e);
+  }
+};
+window.markPaid = async (key) => {
+  const card = document.getElementById('card-'+key);
+  if(card) card.classList.add('processing');
+  
+  try {
+    const snap = await get(ref(db, `bot/withdrawals/${key}`));
+    const wd = snap.val(); if(!wd) return;
+    const uid = wd.user_id || '';
+    const amount = wd.amount || 0;
+    const method = wd.method || 'ባንክ';
+    const account = wd.account || '—';
+    await set(ref(db, `bot/withdrawals/${key}/status`), 'approved');
+    await set(ref(db, `users/${uid}/pending_withdrawal`), 0);
+    await set(ref(db, `bot/state/${uid}`), null);
+
+    const wdSnap = await get(ref(db, `analytics/totalWithdrawals`));
+    await set(ref(db, `analytics/totalWithdrawals`), (wdSnap.val()||0)+amount);
+    const profSnap = await get(ref(db, `analytics/totalProfit`));
+    await set(ref(db, `analytics/totalProfit`), Math.max(0,(profSnap.val()||0)-amount));
+
+    await set(ref(db, `notifications/${uid}`), {
+      message: `✅ ${amount} ብር በ ${method} ተላከ!`, time: Date.now(), read: false
+    });
+    const BOT_TOKEN = '8710010099:AAFSR9XT0ox3F9ZYmlqx47expiyuBO4Pbzk';
+await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+  method: 'POST',
+  headers: {'Content-Type':'application/json'},
+  body: JSON.stringify({
+    chat_id: uid,
+    text: `✅ ${amount} ብር በ ${method} ተላከ!\n📋 Account: ${account}`
+  })
+});
+    stopMyTimer(key);
+    toast(`✅ ${amount} ብር — PAID!`, 'success');
+  } catch(e){
+    if(card) card.classList.remove('processing');
+    toast('❌ Error!', 'error');
+  }
+};
+
+window.markReject = async (key) => {
+  const card = document.getElementById('card-'+key);
+  if(card) card.classList.add('processing');
+  try {
+    await update(ref(db, `bot/withdrawals/${key}`), {
+      status: 'pending',
+      acceptedBy: null,
+      acceptedAt: null
+    });
+    stopMyTimer(key);
+    toast(`↩ Request ለሌላ Agent ተለቀቀ!`, 'info');
+  } catch(e){
+    if(card) card.classList.remove('processing');
+    toast('❌ Error!', 'error');
+  }
+};
+
+function startMyTimer(key, acceptedAt){
+  stopMyTimer(key);
+  const totalDash = 138.2;
+  function tick(){
+    const remain = Math.max(0, LOCK_MS - (Date.now() - acceptedAt));
+    const frac = remain / LOCK_MS;
+    const numEl = document.getElementById(`tnum-${key}`);
+    const progEl = document.getElementById(`tprog-${key}`);
+    if(numEl) numEl.textContent = fmtSecs(remain);
+    if(progEl){
+      progEl.style.strokeDashoffset = totalDash * (1 - frac);
+      progEl.style.stroke = frac < 0.3 ? '#f87171' : frac < 0.6 ? '#fb923c' : '#d4a853';
+    }
+    if(remain <= 0){ stopMyTimer(key); releaseLock(key); }
+  }
+  tick();
+  activeTimers[key] = setInterval(tick, 1000);
+}
+function stopMyTimer(key){
+  if(activeTimers[key]){ clearInterval(activeTimers[key]); delete activeTimers[key]; }
+}
+async function releaseLock(key){
+  try {
+    const snap = await get(ref(db, `bot/withdrawals/${key}`));
+    const wd = snap.val();
+    if(wd && wd.status === 'accepted' && wd.acceptedBy === AGENT_ID){
+      await update(ref(db, `bot/withdrawals/${key}`), { status:'pending', acceptedBy:null, acceptedAt:null });
+      toast('⏰ 3 ደቂቃ አልቋል — Request ተለቀቀ!', 'error');
+    }
+  } catch(e){}
+}
+
+function startLockedTimer(key, acceptedAt){
+  if(lockedTimers[key]) return;
+  lockedTimers[key] = setInterval(()=>{
+    const el = document.getElementById(`locked-cd-${key}`);
+    const remain = Math.max(0, LOCK_MS - (Date.now() - acceptedAt));
+    if(el) el.textContent = fmtSecs(remain);
+    if(remain <= 0){ 
+  clearInterval(lockedTimers[key]); 
+  delete lockedTimers[key];
+  const card = document.getElementById('card-'+key);
+  if(card){
+    card.querySelector('.wd-actions').innerHTML = `<button class="btn-accept" onclick="acceptRequest('${key}')">⚡ ACCEPT</button>`;
+  }
+}
+  }, 1000);
+}
+
+// ── RENDER PENDING ──
+function renderPending(data){
+  const box = document.getElementById('pendingList');
+  const now = Date.now();
+  const visible = Object.entries(data).filter(([,v])=>v.status!=='approved'&&v.status!=='rejected');
+
+  const pendingOnly = visible.filter(([,v])=>v.status==='pending');
+  document.getElementById('pendingCount').textContent = pendingOnly.length;
+  const total = pendingOnly.reduce((s,[,v])=>s+(v.amount||0),0);
+  document.getElementById('pendingTotal').textContent = total.toLocaleString()+' ብር';
+
+  if(!visible.length){
+    box.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-title">ምንም Pending የለም</div><div class="empty-sub">// ALL CLEAR</div></div>`;
+    return;
+  }
+
+  visible.sort((a,b)=>{
+    return (b[1].time?new Date(b[1].time).getTime():0)-(a[1].time?new Date(a[1].time).getTime():0);
+  });
+
+  box.innerHTML = '';
+  visible.forEach(([key, wd], idx) => {
+    const display   = wd.display || wd.full_name || wd.username || wd.user_id || '—';
+    const uid       = wd.user_id || '—';
+    const amount    = wd.amount || 0;
+    const method    = wd.method || 'BANK';
+    const account   = wd.account || '—';
+    const time      = fmtTime(wd.time);
+    const isMyCard  = wd.status === 'accepted' && wd.acceptedBy === AGENT_ID;
+    const isLocked  = wd.status === 'accepted' && wd.acceptedBy !== AGENT_ID;
+
+    let actionsHTML = '';
+    if(isLocked){
+      const remain = Math.max(0, LOCK_MS - (now - (wd.acceptedAt||0)));
+      actionsHTML = `
+        <div class="locked-bar">
+          <span style="font-size:1rem;">🔒</span>
+          <span class="locked-text">LOCKED — ${wd.acceptedBy}</span>
+          <span class="locked-countdown" id="locked-cd-${key}">${fmtSecs(remain)}</span>
+        </div>`;
+    } else if(isMyCard){
+      actionsHTML = `
+        <div class="timer-wrap">
+          <div class="timer-circle">
+            <svg viewBox="0 0 48 48">
+              <circle class="track" cx="24" cy="24" r="22"/>
+              <circle class="progress" id="tprog-${key}" cx="24" cy="24" r="22"/>
+            </svg>
+            <div class="timer-num" id="tnum-${key}">3:00</div>
+          </div>
+          <div class="timer-info">
+            <div class="timer-label">TIME REMAINING</div>
+            <div class="timer-status">💳 ከፈለ PAID — ካልከፈለ REJECT</div>
+          </div>
+        </div>
+        <div class="pr-row">
+  <label style="flex:1;display:flex;align-items:stretch;cursor:pointer;border-right:1px solid #1a1a28;">
+    <input type="file" accept="image/*" id="photo-${key}" 
+      style="display:none" onchange="onPhotoSelected('${key}',this)">
+    <div class="btn-paid" id="paid-btn-${key}" style="flex:1;display:flex;align-items:center;justify-content:center;font-size:0.8rem;letter-spacing:1px;">📸 Screenshot</div>
+  </label>
+  <button class="btn-reject" onclick="markReject('${key}')">✕ REJECT</button>
+</div>`;
+    } else {
+      actionsHTML = `<button class="btn-accept" onclick="acceptRequest('${key}')">⚡ ACCEPT</button>`;
+    }
+
+    const card = document.createElement('div');
+    card.className = 'wd-card' + (isMyCard ? ' accepted-by-me' : '');
+    card.id = 'card-'+key;
+    card.style.animationDelay = (idx*0.07)+'s';
+    card.innerHTML = `
+      <div class="wd-body">
+        <div class="wd-avatar">🏧</div>
+        <div class="wd-info">
+          <div class="wd-name">${display}</div>
+          <div class="wd-uid">ID: ${uid}</div>
+          <div class="wd-meta">
+            <span class="meta-chip method">${method}</span>
+            <span class="meta-chip account">📋 ${account}</span>
+          </div>
+        </div>
+        <div class="wd-right">
+          <div class="wd-amount">${amount.toLocaleString()}</div>
+          <div class="wd-amount-label">ብር</div>
+          <div class="wd-time">${time}</div>
+        </div>
+      </div>
+      <div class="wd-actions">${actionsHTML}</div>`;
+    box.appendChild(card);
+
+    if(isMyCard) startMyTimer(key, wd.acceptedAt);
+    if(isLocked) startLockedTimer(key, wd.acceptedAt);
+  });
+}
+
+// ── RENDER STATS ──
+function renderStats(data){
+  if(!AGENT_ID) return;
+  const now = Date.now();
+  const DAY = 24*60*60*1000;
+  const WEEK = 7*DAY;
+
+  const approved = Object.entries(data).filter(([,v])=>v.status==='approved' && v.acceptedBy===AGENT_ID);
+  const rejected = Object.entries(data).filter(([,v])=>v.status==='rejected' && v.acceptedBy===AGENT_ID);
+
+  const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+  const todayItems = approved.filter(([,v])=>v.time&&new Date(v.time)>=todayStart);
+  const todaySum   = todayItems.reduce((s,[,v])=>s+(v.amount||0),0);
+  document.getElementById('statTodayAmt').textContent = todaySum.toLocaleString()+' ብር';
+  document.getElementById('statTodayCnt').textContent = todayItems.length+' ጊዜ';
+
+  const weekStart = now - WEEK;
+  const weekItems = approved.filter(([,v])=>v.time&&new Date(v.time).getTime()>=weekStart);
+  const weekSum   = weekItems.reduce((s,[,v])=>s+(v.amount||0),0);
+  document.getElementById('statWeekAmt').textContent = weekSum.toLocaleString()+' ብር';
+  document.getElementById('statWeekCnt').textContent = weekItems.length+' ጊዜ';
+
+  const rejItems = rejected.filter(([,v])=>v.time&&new Date(v.time).getTime()>=weekStart);
+  const rejSum   = rejItems.reduce((s,[,v])=>s+(v.amount||0),0);
+  document.getElementById('statRejAmt').textContent = rejSum.toLocaleString()+' ብር';
+  document.getElementById('statRejCnt').textContent = rejItems.length+' ጊዜ';
+
+  // Daily breakdown
+  const days = [];
+  for(let i=6;i>=0;i--){
+    const d = new Date(now - i*DAY); d.setHours(0,0,0,0);
+    const next = new Date(d.getTime()+DAY);
+    const label = d.toLocaleDateString('am-ET',{month:'short',day:'numeric'});
+    const items = approved.filter(([,v])=>{
+      if(!v.time) return false;
+      const t = new Date(v.time).getTime();
+      return t>=d.getTime()&&t<next.getTime();
+    });
+    days.push({label, sum:items.reduce((s,[,v])=>s+(v.amount||0),0), count:items.length});
+  }
+
+  const maxSum = Math.max(...days.map(d=>d.sum),1);
+  document.getElementById('dailyBreakdown').innerHTML = days.map(d=>`
+    <div class="day-bar-row">
+      <div class="day-bar-label">${d.label}</div>
+      <div class="day-bar-track"><div class="day-bar-fill" style="width:${Math.round(d.sum/maxSum*100)}%;"></div></div>
+      <div class="day-bar-val">
+        ${d.sum>0?d.sum.toLocaleString()+' ብር':'<span style="color:#2a2a40">—</span>'}
+        ${d.count>0?`<span class="day-bar-cnt"> (${d.count})</span>`:''}
+      </div>
+    </div>`).join('');
+
+  // Approved list
+  const sortedApp = [...weekItems].sort((a,b)=>new Date(b[1].time)-new Date(a[1].time));
+  document.getElementById('approvedList').innerHTML = !sortedApp.length
+    ? `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">Approved የለም</div></div>`
+    : sortedApp.map(([,v])=>`
+        <div class="hist-item">
+          <span class="hist-name">${v.display||v.full_name||v.username||v.user_id||'—'}</span>
+          <span style="font-family:'Space Mono',monospace;font-size:0.68rem;color:#90cdf4;">${v.method||'BANK'} · ${v.account||'—'}</span>
+          <span class="hist-amount">${(v.amount||0).toLocaleString()} ብር</span>
+          <span class="hist-status-approved">✅ PAID</span>
+          <span class="hist-time">${fmtTime(v.time)}</span>
+        </div>`).join('');
+}
+
+
+
+// ── REALTIME ──
+onValue(ref(db,'bot/withdrawals'),(snap)=>{
+  withdrawData = snap.val() || {};
+  renderPending(withdrawData);
+  renderStats(withdrawData);
+});
+</script>
+</body>
+</html>
