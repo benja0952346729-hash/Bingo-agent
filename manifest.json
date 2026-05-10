@@ -1,0 +1,15 @@
+{
+  "name": "Bingo Agent",
+  "short_name": "Agent",
+  "start_url": "/Bingo-agent/",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#d4a853",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
